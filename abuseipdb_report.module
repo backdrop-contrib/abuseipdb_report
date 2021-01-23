@@ -1,0 +1,170 @@
+<?php
+/**
+ * @file abuseipdb_report.module
+ */
+
+/**
+ * Implements hook_config_info().
+ */
+function abuseipdb_report_config_info() {
+  $prefixes['abuseipdb_report.settings'] = array(
+    'label' => t('AbuseIPDB report'),
+    'group' => t('Configuration'),
+  );
+  return $prefixes;
+}
+
+/**
+ * Implements hook_permission().
+ *
+ */
+function abuseipdb_report_permission() {
+  return array(
+    'abuseipdb_report settings' => array(
+      'title' => t('AbuseIPDB report settings')
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ *
+ */
+function abuseipdb_report_menu() {
+  $items = array();
+
+  $items['admin/config/services/abuseipdb_report'] = array(
+    'type' => MENU_NORMAL_ITEM,
+    'title' => 'AbuseIPDB report',
+    'description' => 'AbuseIPDB report settings.',
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('abuseipdb_report_form'),
+    'access arguments' => array('abuseipdb_report settings'),
+    'file' => 'abuseipdb_report.admin.inc',
+  );
+  return $items;
+}
+
+/**
+ * Post report
+ * @param string $ip
+ * @param string $comment
+ * @param string $from
+ * @param array $categories
+ */
+function abuseipdb_report_ip($ip, $comment, $from = '', $categories = array()) {
+  $config      = config('abuseipdb_report.settings');
+  $api_key     = $config->get('abuseipdb_api_key');
+  $log_enabled = $config->get('log_enabled');
+  
+  if (!empty($api_key)) {
+    if (empty($from)) {
+      $from = 'unknown';
+    }
+    
+    $categories_string = implode(',', $categories);
+    if (empty($categories_string)) {
+      $categories_string = '21';
+    }
+
+    $data = array(
+      'ip' => urlencode($ip),
+      'categories' => $categories_string,
+      'comment' => 'Backdrop CMS module report: ' . $comment,
+    );
+
+    $url = "https://api.abuseipdb.com/api/v2/report";
+
+    // Prepare new cURL resource
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+    curl_setopt($ch, CURLINFO_HEADER_OUT, TRUE);
+    curl_setopt($ch, CURLOPT_POST, TRUE);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+
+    // Set HTTP Header for POST request 
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+      'Key: ' . $api_key,
+      'Accept: application/json',
+      )
+    );
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+
+    // Submit the POST request
+    $response = curl_exec($ch);
+
+    // Close cURL session handle
+    curl_close($ch);
+
+    if ($response && $log_enabled) {
+      $response_decoded = backdrop_json_decode($response);
+      
+      if (array_key_exists('errors', $response_decoded)) {
+        watchdog(
+          'abuseipdb_report', 
+          'Sending IP @ip report to AbuseIPDB failed with status <b>@status</b>, source parameter is <b>@source</b>, error details: <i>@detail</i>', 
+          array(
+            '@ip' => $ip,
+            '@detail' => $response_decoded['errors'][0]['detail'],
+            '@status' => $response_decoded['errors'][0]['status'], 
+            '@source' => $response_decoded['errors'][0]['source']['parameter'],
+          ),
+          WATCHDOG_WARNING
+        );
+      }
+      elseif (array_key_exists('data', $response_decoded)) {
+        watchdog(
+          'abuseipdb_report', 
+          'IP @ip reported by @from, confidence of abuse in AbuseIPDB is @score%.', 
+          array(
+            '@ip' => $response_decoded['data']['ipAddress'], 
+            '@from' => $from,
+            '@score' => $response_decoded['data']['abuseConfidenceScore'],
+          )
+        );
+      }
+    }
+  }
+}
+
+/**
+ * Get most relevant AbuseIPDB categories.
+ */
+function abuseipdb_report_categories() {
+  return array(
+    3 => array(
+      'name' => t('Fraud Orders'),
+      'description' => t('Fraudulent orders.'),
+    ),
+    10 => array(
+      'name' => t('Web Spam'),
+      'description' => t('Comment/forum spam, HTTP referer spam, or other CMS spam.'),
+    ),
+    11 => array(
+      'name' => t('Email Spam'),
+      'description' => t('Spam email content, infected attachments, phishing emails, and spoofed senders (typically via exploited host or SMTP server abuse). Note: Limit comments to only relevent information (instead of log dumps) and be sure to remove PII if you want to remain anonymous.'),
+    ),
+    14 => array(
+      'name' => t('Port Scan'),
+      'description' => t('Scanning for open ports and vulnerable services.'),
+    ),
+    18 => array(
+      'name' => t('Brute-Force'),
+      'description' => t('Credential brute-force attacks on webpage logins and services like SSH, FTP, SIP, SMTP, RDP, etc. This category is seperate from DDoS attacks.'),
+    ),
+    19 => array(
+      'name' => t('Bad Web Bot'),
+      'description' => t('Webpage scraping (for email addresses, content, etc) and crawlers that do not honor robots.txt. Excessive requests and user agent spoofing can also be reported here.'),
+    ),
+    21 => array(
+      'name' => t('Web App Attack'),
+      'description' => t('Attempts to probe for or exploit installed web applications such as a CMS like WordPress/Drupal, e-commerce solutions, forum software, phpMyAdmin and various other software plugins/solutions.'),
+    ),
+    23 => array(
+      'name' => t('IoT Targeted'),
+      'description' => t('Abuse was targeted at an "Internet of Things" type device. Include information about what type of device was targeted in the comments.'),
+    ),
+  );
+}

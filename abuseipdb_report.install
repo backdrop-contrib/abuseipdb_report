@@ -1,0 +1,24 @@
+<?php
+/**
+ * @file abuseipdb_report.install
+ * Install, update and uninstall functions for the module.
+ */
+
+/**
+ * Implements hook_requirements().
+ */
+function abuseipdb_report_requirements($phase) {
+  $requirements = array();
+  $t = get_t();
+  
+  $has_curl = function_exists('curl_init');
+  
+  if ($phase == 'install') {
+    if (!$has_curl) {
+      $requirements['curl']['severity'] = REQUIREMENT_ERROR;
+      $requirements['curl']['description'] = $t('The "AbuseIPDB report" module could not be installed because the PHP <a href="@curl_url">cURL</a> library is not available.', array('@curl_url' => 'http://php.net/manual/en/curl.setup.php'));
+    }
+  }
+  
+  return $requirements;
+}

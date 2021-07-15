@@ -70,7 +70,7 @@ function abuseipdb_report_ip($ip, $comment, $from = '', $categories = array()) {
     $data = array(
       'ip' => urlencode($ip),
       'categories' => $categories_string,
-      'comment' => 'Backdrop CMS module report: ' . $comment,
+      'comment' => 'Backdrop CMS module - ' . $comment,
     );
 
     $url = "https://api.abuseipdb.com/api/v2/report";

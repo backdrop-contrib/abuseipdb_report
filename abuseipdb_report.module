@@ -56,19 +56,19 @@ function abuseipdb_report_ip($ip, $comment, $from = '', $categories = array()) {
   $config      = config('abuseipdb_report.settings');
   $api_key     = $config->get('abuseipdb_api_key');
   $log_enabled = $config->get('log_enabled');
-  
+
   if (!empty($api_key)) {
     if (empty($from)) {
       $from = 'unknown';
     }
-    
+
     $categories_string = implode(',', $categories);
     if (empty($categories_string)) {
       $categories_string = '21';
     }
 
     $data = array(
-      'ip' => urlencode($ip),
+      'ip' => $ip,
       'categories' => $categories_string,
       'comment' => 'Backdrop CMS module - ' . $comment,
     );
@@ -83,7 +83,7 @@ function abuseipdb_report_ip($ip, $comment, $from = '', $categories = array()) {
     curl_setopt($ch, CURLOPT_POST, TRUE);
     curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
 
-    // Set HTTP Header for POST request 
+    // Set HTTP Header for POST request
     curl_setopt($ch, CURLOPT_HTTPHEADER, array(
       'Key: ' . $api_key,
       'Accept: application/json',
@@ -98,17 +98,17 @@ function abuseipdb_report_ip($ip, $comment, $from = '', $categories = array()) {
     // Close cURL session handle
     curl_close($ch);
 
-    if ($response && $log_enabled) {
+    if (!empty($response) && $log_enabled) {
       $response_decoded = backdrop_json_decode($response);
-      
+
       if (array_key_exists('errors', $response_decoded)) {
         watchdog(
-          'abuseipdb_report', 
-          'Sending IP @ip report to AbuseIPDB failed with status <b>@status</b>, source parameter is <b>@source</b>, error details: <i>@detail</i>', 
+          'abuseipdb_report',
+          'Sending IP @ip report to AbuseIPDB failed with status <b>@status</b>, source parameter is <b>@source</b>, error details: <i>@detail</i>',
           array(
             '@ip' => $ip,
             '@detail' => $response_decoded['errors'][0]['detail'],
-            '@status' => $response_decoded['errors'][0]['status'], 
+            '@status' => $response_decoded['errors'][0]['status'],
             '@source' => $response_decoded['errors'][0]['source']['parameter'],
           ),
           WATCHDOG_WARNING
@@ -116,10 +116,10 @@ function abuseipdb_report_ip($ip, $comment, $from = '', $categories = array()) {
       }
       elseif (array_key_exists('data', $response_decoded)) {
         watchdog(
-          'abuseipdb_report', 
-          'IP @ip reported by @from, confidence of abuse in AbuseIPDB is @score%.', 
+          'abuseipdb_report',
+          'IP @ip reported by @from, confidence of abuse in AbuseIPDB is @score%.',
           array(
-            '@ip' => $response_decoded['data']['ipAddress'], 
+            '@ip' => $response_decoded['data']['ipAddress'],
             '@from' => $from,
             '@score' => $response_decoded['data']['abuseConfidenceScore'],
           )

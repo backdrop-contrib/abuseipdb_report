@@ -1,7 +1,8 @@
 AbuseIPDB report
 ================
 
-> making the internet safer, one IP at a time     
+> making the internet safer, one IP at a time  
+>       
 > **Report abusive IPs** engaging in hacking attempts or other malicious behavior and help fellow sysadmins!
 
 This module provides reporting ability to the [AbuseIPDB](https://www.abuseipdb.com/) database.
@@ -10,7 +11,7 @@ automate the reporting process using pluggable modules such as [Antiscan](https:
 
 Installation
 ------------
-Install this module using the official Backdrop CMS instructions at https://backdropcms.org/guide/modules
+Install this module using the official Backdrop CMS instructions at https://backdropcms.org/guide/modules    
 **Please note:** [PHP cURL](http://php.net/manual/en/curl.setup.php) library must be installed on your server. 
 
 Configuration and usage
@@ -20,7 +21,7 @@ Web services > AbuseIPDB report* (admin/config/services/abuseipdb_report).
 
 You need your own free [API key](https://www.abuseipdb.com/register).   
 You can also use multiple keys for different sites.   
-Right after saving this key you can report abusive IP and enable automated reporting in the Antiscan module (version 1.x-1.0.4 or above).
+Right after saving this key you can report abusive IP and enable automated reporting via the Antiscan module (version 1.x-1.0.4 or above).
 
 **Screenshots** are available at https://findlab.net/projects/abuseipdb-report
 

@@ -6,4 +6,4 @@ type = module
 
 configure = admin/config/services/abuseipdb_report
 
-version = 1.0.2
+version = 1.0.3

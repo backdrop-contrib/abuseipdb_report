@@ -45,8 +45,8 @@ function abuseipdb_report_form($form, &$form_state) {
     '#type' => 'fieldset',
     '#title' => t('Report abusive IP now'),
     '#collapsible' => TRUE,
-    '#collapsed' => empty($api_key) ? TRUE : FALSE,
-    '#disabled' => empty($api_key) ? TRUE : FALSE,
+    '#collapsed' => empty($api_key),
+    '#disabled' => empty($api_key),
     '#description' => t('You can report an IP directly to AbuseIPDB by using form below.'),
   );
   $form['report_now']['ip'] = array(
@@ -110,7 +110,7 @@ function abuseipdb_report_form_validate_report($form, &$form_state) {
   if ($ip == ip_address()) {
     form_set_error('ip', t('You are trying to report your IP address.'));
   }
-  elseif (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_RES_RANGE) == FALSE) {
+  elseif (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_RES_RANGE)) {
     form_set_error('ip', t('Enter a valid IP address.'));
   }
 
@@ -147,9 +147,9 @@ function abuseipdb_report_form_submit($form, &$form_state) {
     abuseipdb_report_ip($ip, $comment, '"AbuseIPDB report" module', array_filter($categories));
     backdrop_set_message(t('IP @ip have been reported, you can see the result on the <a href="@log">log page</a>.',
       array(
-        '@ip' => $ip, 
+        '@ip' => $ip,
         '@log' => url('admin/reports/dblog'),
-      )         
+      )
     ));
   }
 }

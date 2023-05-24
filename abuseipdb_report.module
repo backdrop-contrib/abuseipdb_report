@@ -100,8 +100,10 @@ function abuseipdb_report_ip($ip, $comment, $from = '', $categories = array()) {
 
     if (!empty($response) && $log_enabled) {
       $response_decoded = backdrop_json_decode($response);
+      // Check response
+      $response_array = is_array($response_decoded) ? $response_decoded : array();
 
-      if (array_key_exists('errors', $response_decoded)) {
+      if (array_key_exists('errors', $response_array)) {
         watchdog(
           'abuseipdb_report',
           'Sending IP @ip report to AbuseIPDB failed with status <b>@status</b>, source parameter is <b>@source</b>, error details: <i>@detail</i>',
@@ -114,7 +116,7 @@ function abuseipdb_report_ip($ip, $comment, $from = '', $categories = array()) {
           WATCHDOG_WARNING
         );
       }
-      elseif (array_key_exists('data', $response_decoded)) {
+      elseif (array_key_exists('data', $response_array)) {
         watchdog(
           'abuseipdb_report',
           'IP @ip reported by @from, confidence of abuse in AbuseIPDB is @score%.',

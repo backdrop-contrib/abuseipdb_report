@@ -1,4 +1,4 @@
-name = AbuseIPDB report 
+name = AbuseIPDB report
 description = Report abusive IPs to AbuseIPDB
 package = Spam control
 backdrop = 1.x
@@ -6,4 +6,4 @@ type = module
 
 configure = admin/config/services/abuseipdb_report
 
-version = 1.0.3
+version = 1.0.4
